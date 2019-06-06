@@ -869,7 +869,7 @@
         }
       } else {
         folder.n = +findInText(folderBlock, '</a> (', ')');
-        folder.ru = findInText(folderBlock, `<a target="_blank" href="/mykp/movies/list/type/${folder.id}/" title="">`, '</a>');
+        folder.ru = findInText(folderBlock, `<a href="/mykp/movies/list/type/${folder.id}/" title="">`, '</a>');
       }
       folder.m = [];
       folder.d = null;
@@ -897,7 +897,7 @@
         if (i !== 0) {
           votePerPageDocument = await getDocument(`${site}/user/${userId}/votes/list/ord/date/perpage/10/vote/${kpUserRating}/page/${i + 1}/`);
         }
-        let kpIds = findAllInText(votePerPageDocument, '<div class="nameRus"><a target="_blank" href="/film/', '/"');
+        let kpIds = findAllInText(votePerPageDocument, '<div class="nameRus"><a href="/film/', '/"');
         let kpRatingDates = findAllInText(votePerPageDocument, '<div class="date">', '</div>');
         await Promise.all(kpIds.map(async (kpId, index) => {
           let movie = {};
@@ -907,7 +907,7 @@
           movie.ru = cleanText(findInText(movieDocument, '<h1 class="moviename-big" itemprop="name">', '</h1>')
             .replace(/<span>.*<\/span>/, '').replace('&nbsp;', ' '));
           movie.en = cleanText(findInText(movieDocument, '<span class="alternativeHeadline" itemprop="alternativeHeadline">', '</span>'));
-          movie.y = +findInText(movieDocument, '<a target="_blank" href="/lists/m_act%5Byear%5D/', '/"');
+          movie.y = +findInText(movieDocument, '<a href="/lists/m_act%5Byear%5D/', '/"');
           let kpImdbInfo = findInText(movieDocument, '>IMDb: ', ')</div>');
           if (kpImdbInfo) {
             movie.r = +kpImdbInfo.split(' ')[0];
@@ -945,7 +945,7 @@
         let folderPerPageDocument = await getDocument(`${site}/mykp/movies/list/type/${folder.id}/perpage/10/page/${i + 1}/`);
         let movieBlocks = findAllInText(folderPerPageDocument, '<li id="film_', '</li>');
         movieBlocks.forEach(movieBlock => {
-          let kpId = +findInText(movieBlock, '<a target="_blank" class="name" href="/film/', '/"');
+          let kpId = +findInText(movieBlock, '<a class="name" href="/film/', '/"');
           folder.m.push(kpId);
           let isMovieFound = movies.some(movie => movie.id === kpId);
           if (!isMovieFound) {
@@ -1087,9 +1087,9 @@
       }
       searchMovieBlocks.forEach(searchMovieBlock => {
         let imdbInfo = {};
-        imdbInfo.id = findInText(searchMovieBlock, '<a target="_blank" href="/title/', '/');
+        imdbInfo.id = findInText(searchMovieBlock, '<a href="/title/', '/');
         imdbInfo.u = +findInText(searchMovieBlock, '<span name="ur" data-no-rating="Rate this">', '</span>') || null;
-        imdbInfo.en = findInText(searchMovieBlock, `<a target="_blank" href="/title/${imdbInfo.id}/?ref_=adv_li_tt"\n>`, '</a>').trim();
+        imdbInfo.en = findInText(searchMovieBlock, `<a href="/title/${imdbInfo.id}/?ref_=adv_li_tt"\n>`, '</a>').trim();
         imdbInfo.y = parseInt(findInText(searchMovieBlock, '<span class="lister-item-year text-muted unbold">(', '</span>').replace(/.*\) \(/, ''), 10);
         imdbInfo.r = +findInText(searchMovieBlock, '<meta itemprop="ratingValue" content="', '" />');
         imdbInfo.v = +findInText(searchMovieBlock, '<meta itemprop="ratingCount" content="', '" />');
@@ -1111,7 +1111,7 @@
     let folderBlocks = findAllInText(folderDocument, '<li class="ipl-zebra-list__item user-list"', '<div class="overflow-menu">');
     folderBlocks.forEach(folderBlock => {
       let folderId = findInText(folderBlock, 'id="', '"');
-      let folderName = findInText(folderBlock, `<a target="_blank" class="list-name" href="/list/${folderId}/">`, '</a>');
+      let folderName = findInText(folderBlock, `<a class="list-name" href="/list/${folderId}/">`, '</a>');
       let duplicateFolder = folders.find(folder => folder.ru === folderName);
       if (duplicateFolder) {
         duplicateFolder.d = folderId;
