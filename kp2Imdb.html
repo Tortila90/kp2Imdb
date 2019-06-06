@@ -542,7 +542,7 @@
                 <td colspan="4"><input name="url-${movie.id}"></td>
               </tr>
             `;
-          } else if (movie.i.length >= 2 || hasDifferentUserRatings) {
+          } else if (movie.i.length >= 2) {
             movieHTML += `
               <tr>
                 <td colspan="2">Google</td>
@@ -553,6 +553,8 @@
                 <td colspan="4"><input name="url-${movie.id}"></td>
               </tr>
             `;
+          }
+          if (hasDifferentUserRatings) {
             let imdbWithUserRating = movie.i.filter(i => i.u > 0);
             let userRating = settings.shouldPreferImdbUserRatings && imdbWithUserRating.length ? imdbWithUserRating[0].u : movie.u;
             if (userRating > 0) {
