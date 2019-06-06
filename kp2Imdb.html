@@ -1,0 +1,1244 @@
+<!doctype html>
+<html>
+<head>
+<style>
+  body {
+    margin: 10px;
+    font-size: 16px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .bold {
+    font-weight: bold;
+  }
+
+  .step,
+  .step table {
+    text-decoration-line: line-through;
+  }
+
+  .current-step,
+  .current-step table {
+    text-decoration-line: none;
+  }
+
+  .current-step ~ .step {
+    display: none;
+  }
+  
+  .button {
+    padding: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .button::after {
+    content: "";
+    display: inline-block;
+    margin-bottom: 17px;
+  }
+  
+  .successful::before {
+    content: "\2714";
+    margin-right: 3px;
+    color: forestgreen;
+  }
+  
+  .not-successful::before {
+    content: "\2718";
+    margin-right: 3px;
+    color: red;
+  }
+  
+  .list {
+    border-left-width: 5px;
+    border-left-style: solid;
+  }
+  
+  .list li {
+    margin: -10px auto 20px -20px;
+    list-style-type: none;
+  }
+  
+  .list p {
+    margin-left: 10px;
+  }
+
+  table {
+    display: inline-table;
+    margin: 5px 0 0 10px;
+    border: 1px solid black;
+    border-spacing: 10px 5px;
+  }
+
+  label {
+    display: block;
+  }
+</style>
+</head>
+<body>
+<!--#region start-->
+<div class="step current-step">
+  <p>Эта страница поможет вам экспортировать свои оценки и папки с КиноПоиска на IMDb. Не закрывайте эту страницу, пока все не будет готово. Иногда вам нужно будет перейти на страницу КиноПоиска или IMDb и совершить там определенные действия. Некоторые действия могут занять длительное время, это зависит от количества ваших фильмов.</p>
+</div>
+<div class="step">
+  <p>Процесс разделен на несколько этапов. Ближе к концу можно будет выбрать, какие оценки и папки нужно экспортировать. На всех этапах, кроме финального, скрипты лишь считывают данные. Только на финальном этапе скрипт внесет изменения в вашем аккаунте на IMDb. Об этом будет предупреждено заранее.</p>
+</div>
+<div data-after="submitSettings('export'); disableSettings('export');" class="step">
+  <p>Выберите, что именно вы хотите экспортировать:</p>
+  <form name="export-settings">
+    <label><input type="radio" name="settings" value="both" checked> Оценки и папки</label>
+    <label><input type="radio" name="settings" value="ratings"> Только оценки</label>
+    <label><input type="radio" name="settings" value="folders"> Только папки</label>
+  </form>
+</div>
+<!--#endregion-->
+<!--#region export-->
+<div class="step">
+  <p>1. Залогиньтесь в свой аккаунт на <a target="_blank" href="https://www.kinopoisk.ru">КиноПоиске</a>.</p>
+</div>
+<div class="step">
+  <p>Откройте браузерную консоль на странице <span class="bold">КиноПоиска</span> (горячие клавиши в Chrome: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd>).</p>
+</div>
+<div data-before="loadScript('export'); showBlock('copy');" data-after="disableScript('export'); hideBlock('copy');" class="step">
+  <p>Следующий скрипт найдет все ваши оценки и папки на КиноПоиске. Скопируйте этот скрипт, вставьте его в браузерную консоль на странице <span class="bold">КиноПоиска</span>, затем нажмите <kbd>Enter</kbd>. Подождите, пока скрипт закончит свою работу.</p>
+  <p><textarea id="export-script"></textarea></p>
+</div>
+<div data-before="focusResult('export');" data-after="disableResult('export'); validateResult('export');" class="step">
+  <p>Скопируйте результат выполнения скрипта на <span class="bold">КиноПоиске</span> и вставьте его сюда:</p>
+  <p><textarea id="export-result"></textarea></p>
+</div>
+<div data-before="showBlock('save');" data-after="clearScript('export'); clearResult('export'); hideBlock('save');" class="step">
+  <p>На всякий случай рекомендуется сохранить результат в виде отдельного файла. Если что-то пойдет не так, можно будет пропустить выполнения предыдущего скрипта и вставить только его результат.</p>
+</div>
+<!--#endregion-->
+<!--#region search-->
+<div class="step">
+  <p>2. Залогиньтесь в свой аккаунт на <a target="_blank" href="https://www.imdb.com">IMDb</a>.</p>
+</div>
+<div class="step">
+  <p>Для лучшего результата выберите в <a target="_blank" href="https://www.imdb.com/preferences/general">настройках</a> аккаунта на <span class="bold">IMDb</span> следующие опции:</p>
+  <ul>
+    <li>Title display country/region: <b>Original</b></li>
+    <li>Title display language: <b>(пусто)</b></li>
+  </ul>
+</div>
+<div class="step">
+  <p>Откройте браузерную консоль на странице <span class="bold">IMDb</span> (горячие клавиши в Chrome: <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd>).</p>
+</div>
+<div data-before="loadScript('search'); showBlock('copy');" data-after="disableScript('search'); hideBlock('copy');" class="step">
+  <p>Следующий скрипт найдет фильмы на IMDb, которые соответствуют экспортированым с КиноПоиска. Скопируйте этот скрипт, вставьте его в браузерную консоль на странице <span class="bold">IMDb</span>, затем нажмите <kbd>Enter</kbd>. Подождите, пока скрипт закончит свою работу.</p>
+  <p><textarea id="search-script"></textarea></p>
+</div>
+<div data-before="focusResult('search');" data-after="disableResult('search'); validateResult('search');" class="step">
+  <p>Скопируйте результат выполнения скрипта на <span class="bold">IMDb</span> и вставьте его сюда:</p>
+  <p><textarea id="search-result"></textarea></p>
+</div>
+<div data-before="showBlock('save');" data-after="clearScript('search'); clearResult('search'); hideBlock('save');" class="step">
+  <p>На всякий случай рекомендуется сохранить результат в виде отдельного файла. Если что-то пойдет не так, можно будет пропустить выполнения предыдущего скрипта и вставить только его результат.</p>
+</div>
+<!--#endregion-->
+<!--#region movies-->
+<div data-before="skipSettingsMaybe('ratings');" data-after="submitSettings('ratings'); disableSettings('ratings');" class="step">
+  <p>3. Если оценки у фильма на КиноПоиске и на IMDb не совпадают, то отдать предпочтение оценке:</p>
+  <form name="ratings-settings">
+    <label><input type="radio" name="settings" value="kp"> с КиноПоиска</label>
+    <label><input type="radio" name="settings" value="imdb" checked> с IMDb</label>
+  </form>
+  <p>В независимости от выбора по каждому фильму можно будет выбрать индивидуально.</p>
+</div>
+<div data-before="createList('movies');" data-after="submitList('movies');" class="step">
+  <p>3. Всего ваших фильмов на КиноПоиске: <span id="movie-count">...</span>.</p>
+  <form name="movies-list">
+    <div id="red-list" class="hidden list" style="border-left-color: red;">
+      <p>Фильмы, где не было найдено эквивалентов на IMDb. По умолчанию такие фильмы НЕ будут экспортированы. Всего таких фильмов: <span id="red-count">...</span>.</p>
+      <p>Для каждого из этих фильмов будет предложена ссылка Google I'm Feeling Lucky (первый результат в поиске Google), которая с большой вероятностью перенаправит вас на самый подходящий эквивалент на IMDb. В соответствующем поле нужно вставить ссылку на фильм с IMDb.</p>
+    </div>
+    <div id="orange-list" class="hidden list" style="border-left-color: orange;">
+      <p>Фильмы, где было найдено один или несколько вероятных эквивалентов на IMDb или оценки у фильма на КиноПоиске и на IMDb не совпадают. По умолчанию такие фильмы НЕ будут экспортированы. Всего таких фильмов: <span id="orange-count">...</span>.</p>
+      <p>Если вероятные эквиваленты на IMDb не подходят, для каждого из этих фильмов будет предложена ссылка Google I'm Feeling Lucky (первый результат в поиске Google), которая с большой вероятностью перенаправит вас на самый подходящий эквивалент на IMDb.</p>
+    </div>
+    <div id="green-list" class="hidden list" style="border-left-color: greenyellow;">
+      <p>Фильмы, где был найден очень вероятный эквивалент. По умолчанию такие фильмы будут экспортированы. Всего таких фильмов: <span id="green-count">...</span>.</p>
+    </div>
+  </form>
+</div>
+<!--#endregion-->
+<!--#region folders-->
+<div data-before="skipSettingsMaybe('folders');" data-after="submitSettings('folders'); disableSettings('folders');" class="step">
+  <p>4. Если на IMDb найдена папка с таким же названием, что и на КиноПоиске, то отдать предпочтение такой опции:</p>
+  <form name="folders-settings">
+    <label><input type="radio" name="settings" value="create"> Создать новую папку на IMDb</label>
+    <label><input type="radio" name="settings" value="overwrite" checked> Добавить фильмы в найденную папку на IMDb</label>
+  </form>
+  <p>В независимости от выбора по каждой папке можно будет выбрать индивидуально.</p>
+</div>
+<div data-before="skipListMaybe('folders'); createList('folders');" data-after="submitList('folders');" class="step">
+  <p>4. Всего ваших папок на КиноПоиске: <span id="folder-count">...</span>.</p>
+  <form name="folders-list">
+    <div id="folders-list" class="list" style="border-left-color: purple;"></div>
+  </form>
+</div>
+<!--#endregion-->
+<!--#region import-->
+<div data-before="loadScript('import'); showBlock('copy');" data-after="disableScript('import'); hideBlock('copy');" class="step">
+  <p>5. Этот скрипт импортирует отмеченные фильмы и папки на IMDb. Скопируйте этот скрипт, вставьте его в браузерную консоль на странице <span class="bold">IMDb</span>, затем нажмите <kbd>Enter</kbd>. Подождите, пока скрипт закончит свою работу.</p>
+  <p><span class="bold" style="color: red;">ВНИМАНИЕ!</span> Следующий скрипт будет вносить изменения в вашем аккаунте на IMDb, когда вы его запустите в консоли.</p>
+  <p><textarea id="import-script"></textarea></p>
+</div>
+<div data-before="focusResult('import');" data-after="disableResult('import'); validateResult('import');" class="step">
+  <p>Скопируйте результат выполнения скрипта на <span class="bold">IMDb</span> и вставьте его сюда:</p>
+  <p><textarea id="import-result"></textarea></p>
+</div>
+<div data-before="showBlock('save');" data-after="clearScript('import'); clearResult('import'); hideBlock('save');" class="step">
+  <p>На всякий случай рекомендуется сохранить результат в виде отдельного файла. Если что-то пойдет не так, можно будет пропустить выполнения предыдущего скрипта и вставить только его результат.</p>
+</div>
+<!--#endregion-->
+<!--#region final-->
+<div data-before="createList('final');" class="step">
+  <div id="final-movies-list" class="hidden list" style="border-left-color: red">
+    <p>Фильмы, которые не были импортированы на IMDb. Всего таких фильмов: <span id="final-movie-count">...</span>.</p>
+    <p style="padding-left: 20px;">Не было найдено эквивалентов на IMDb: <span id="final-not-found-count">...</span>.</p>
+    <p style="padding-left: 20px;">Не был отмечен для экспорта: <span id="final-not-exported-count">...</span>.</p>
+    <p style="padding-left: 20px;">Не удалось импортировать на IMDb (возникла ошибка): <span id="final-not-imported-count">...</span>.</p>
+    <p>Для каждого из этих фильмов будет предложена ссылка Google I'm Feeling Lucky (первый результат в поиске Google), которая с большой вероятностью перенаправит вас на самый подходящий эквивалент на IMDb. Оценки и папки нужно будет поставить вручную.</p>
+  </div>
+  <div id="final-folders-list" class="hidden list" style="border-left-color: purple">
+    <p>Папки, которые не удалось импортировать на IMDb. Всего таких папок: <span id="final-folder-count">...</span>.</p>
+  </div>
+</div>
+<div data-before="hideBlock('next');" class="step">
+  Вот и всё :)
+</div>
+<!--#endregion-->
+<!--#region buttons-->
+<p id="copy">
+  <span class="button hidden" onclick="copyToClipboard();" style="background-color: orange;">Скопировать в буфер обмена</span>
+  <span class="successful hidden">Скрипт успешно скопирован.</span>
+  <span class="not-successful hidden">Не удалось скопировать скрипт. Скопируйте скрипт самостоятельно.</span>
+</p>
+<p id="save">
+  <span class="button hidden" onclick="saveAsTxt();" style="background-color: orange;">Сохранить как txt</span>
+  <span class="successful hidden">Скачивание файла с результатом успешно началось.</span>
+  <span class="not-successful hidden">Не удалось скачать файл с результатом. Сохраните результат самостоятельно.</span>
+</p>
+<p id="next">
+  <span class="button" onclick="goToNextStep();" style="background-color: greenyellow;">Дальше</span>
+</p>
+<p id="stop" class="hidden">
+  <span class="not-successful">Что-то пошло не так. Перезагрузите страницу и попробуйте снова или свяжитесь с разработчиком.</span>
+</p>
+<!--#endregion-->
+<script>
+  //#region docs
+  //  movie:
+  //    id - id (KinoPoisk)
+  //    u - user rating (KinoPoisk)
+  //    ru - Russian title (KinoPoisk)
+  //    en - English title (KinoPoisk)
+  //    y - year (KinoPoisk)
+  //    r - IMDb average ratings (KinoPoisk)
+  //    v - IMDb average votes (KinoPoisk)
+  //    d - rating date (KinoPoisk)
+  //    i - array of IMDb equivalents:
+  //      id - id (IMDb)
+  //      u - user rating (IMDb)
+  //      en - title (IMDb)
+  //      y - year (IMDb)
+  //      r - average ratings (IMDb)
+  //      v - average votes (IMDb)
+  //      a - auth token (IMDb)
+  //    e - export:
+  //      id - id (IMDb)
+  //      u - user rating
+  //      a - auth token (IMDb)
+  //      e - if movie should be exported
+  //      s - if export is successful
+  //
+  //  folder:
+  //    id - id (KinoPoisk)
+  //    n - number of movies
+  //    ru - name (KinoPoisk)
+  //    m - array of movie KinoPoisk ids
+  //    d - id of duplicate folder with the same name (IMDb)
+  //    e - export:
+  //      ru - name
+  //      s - if export is successful
+  //      r - export result:
+  //        id - id (IMDb)
+  //        n - number of successfully exported movies
+  //#endregion
+
+  //#region variables
+  let movies = [];
+  let folders = [];
+  let settings = {
+    shouldExportUserRatings: true,
+    shouldExportFolders: true,
+    shouldPreferImdbUserRatings: true,
+    shouldOverwriteImdbFolders: true
+  };
+  //#endregion
+
+  //#region functions
+  let throwError = error => {
+    document.getElementById('copy').classList.add('hidden');
+    document.getElementById('save').classList.add('hidden');
+    document.getElementById('next').classList.add('hidden');
+    document.getElementById('stop').classList.remove('hidden');
+    throw error;
+  };
+  
+  let getLastVisibleTextarea = () => {
+    let textareas = document.querySelectorAll('.step textarea');
+    let hiddenTextareas = document.querySelectorAll('.current-step ~ .step textarea');
+    let textareaIndex = textareas.length - hiddenTextareas.length - 1;
+    return textareas[textareaIndex];
+  };
+
+  let copyToClipboard = () => {
+    let spans = document.getElementById('copy').getElementsByTagName('span');
+    let textarea = getLastVisibleTextarea();
+    try {
+      textarea.focus();
+      textarea.select();
+      if (document.execCommand('copy')) {
+        spans[1].classList.remove('hidden');
+      } else {
+        throw 'notCopied';
+      }
+    } catch (error) {
+      spans[2].classList.remove('hidden');
+      textarea.style.borderColor = 'red';
+    } finally {
+      spans[0].classList.add('hidden');
+      textarea.blur();
+    }
+  };
+  
+  let saveAsTxt = () => {
+    let spans = document.getElementById('save').getElementsByTagName('span');
+    try {
+      let a = document.createElement('a');
+      let textarea = getLastVisibleTextarea();
+      let file = new Blob([ textarea.value ], { type: 'text/plain' });
+      a.href = URL.createObjectURL(file);
+      a.download = `${textarea.id}.txt`;
+      a.click();
+      spans[1].classList.remove('hidden');
+    } catch(error) {
+      spans[2].classList.remove('hidden');
+    } finally {
+      spans[0].classList.add('hidden');
+    }
+  };
+  //#endregion
+
+  //#region step
+  let goToNextStep = () => {
+    let currentStep = document.querySelector('.current-step');
+    eval(currentStep.dataset.after);
+    let nextStep = document.querySelector('.current-step + .step');
+    if (nextStep) {
+      currentStep.classList.remove('current-step');
+      nextStep.classList.add('current-step');
+      eval(nextStep.dataset.before);
+      nextStep.scrollIntoView();
+    }
+  };
+
+  let skipCurrentStep = () => {
+    let currentStep = document.querySelector('.current-step');
+    currentStep.classList.add('hidden');
+    goToNextStep();
+  };
+  //#endregion
+
+  //#region block
+  let showBlock = name => {
+    let spans = document.getElementById(name).getElementsByTagName('span');
+    [...spans].forEach(span => {
+      if (span.classList.contains('button')) {
+        span.classList.remove('hidden');
+      } else {
+        span.classList.add('hidden');
+      }
+    });
+  };
+
+  let hideBlock = name => {
+    let spans = document.getElementById(name).getElementsByTagName('span');
+    [...spans].forEach(span => span.classList.add('hidden'));
+  };
+  //#endregion
+
+  //#region settings
+  let skipSettingsMaybe = name => {
+    switch (name) {
+      case 'ratings':
+        let hasDifferentUserRatings = movies.some(movie => movie.u > 0 && movie.i.some(i => i.u > 0 && movie.u !== i.u));
+        if (!settings.shouldExportUserRatings || !hasDifferentUserRatings) {
+          skipCurrentStep();
+        }
+        break;
+      case 'folders':
+        let hasDuplicateFolders = folders.some(folder => folder.d !== null);
+        if (!settings.shouldExportFolders || !hasDuplicateFolders) {
+          skipCurrentStep();
+        }
+        break;
+    }
+  };
+
+  let submitSettings = name => {
+    let form = document.forms[`${name}-settings`];
+    let checkedValue = form.querySelector(':checked').value;
+    switch (name) {
+      case 'export':
+        settings.shouldExportUserRatings = checkedValue === 'both' || checkedValue === 'ratings';
+        settings.shouldExportFolders = checkedValue === 'both' || checkedValue === 'folders';
+        break;
+      case 'ratings':
+        settings.shouldPreferImdbUserRatings = checkedValue === 'imdb';
+        break;
+      case 'folders':
+        settings.shouldOverwriteImdbFolders = checkedValue === 'overwrite';
+        break;
+    }
+  };
+
+  let disableSettings = name => {
+    [...document.forms[`${name}-settings`].elements].forEach(input => input.disabled = true);
+  };
+  //#endregion
+
+  //#region script
+  let loadScript = name => {
+    let scriptText = document.getElementById(`${name}-script-text`).innerHTML;
+    scriptText = scriptText
+      .replace('let movies = [];', `let movies = ${JSON.stringify(movies)};`)
+      .replace('let folders = [];', `let folders = ${JSON.stringify(folders)};`)
+      .replace('let shouldExportUserRatings = true;', `let shouldExportUserRatings = ${settings.shouldExportUserRatings};`)
+      .replace('let shouldExportFolders = true;', `let shouldExportFolders = ${settings.shouldExportFolders};`);
+    document.getElementById(`${name}-script`).value = scriptText;
+  };
+
+  let disableScript = name => {
+    document.getElementById(`${name}-script`).disabled = true;
+  };
+
+  let clearScript = name => {
+    document.getElementById(`${name}-script`).value = '';
+  };
+  //#endregion
+
+  //#region result
+  let focusResult = name => {
+    setTimeout(() => document.getElementById(`${name}-result`).focus(), 0);
+  };
+
+  let validateResult = name => {
+    let textarea = document.getElementById(`${name}-result`);
+    try {
+      let result = JSON.parse(textarea.value.trim());
+      movies = result.movies;
+      folders = result.folders;
+    } catch (error) {
+      textarea.style.color = 'red';
+      textarea.style.borderColor = 'red';
+      throwError(error);
+    }
+  };
+
+  let disableResult = name => {
+    document.getElementById(`${name}-result`).disabled = true;
+  };
+
+  let clearResult = name => {
+    document.getElementById(`${name}-result`).value = '';
+  };
+  //#endregion
+
+  //#region list
+  let skipListMaybe = name => {
+    switch (name) {
+      case 'folders':
+        if (!settings.shouldExportFolders) {
+          skipCurrentStep();
+        }
+        break;
+    }
+  };
+
+  let createList = name => {
+    switch (name) {
+      case 'movies':
+        let lists = {
+          red: [],
+          orange: [],
+          green: []
+        };
+        movies.sort((a, b) => a.d > b.d ? 1 : -1);
+        movies.forEach(movie => {
+          let li = document.createElement('li');
+          let isMovieNotFound = movie.i.length === 0 || movie.r === 0 || movie.v === 0;
+          let hasDifferentUserRatings = movie.u > 0 && movie.i.some(i => i.u > 0 && movie.u !== i.u);
+          if (isMovieNotFound) {
+            li.innerHTML = `<input title="Экспортировать?" type="checkbox" name="kp-${movie.id}">`;
+            lists.red.push(li);
+          } else {
+            let imdbInfoBias = 1 - Math.abs(1 - movie.r / movie.i[0].r) * 0.5 - Math.abs(1 - movie.v / movie.i[0].v) * 0.5;
+            if (movie.i.length >= 2 || hasDifferentUserRatings || imdbInfoBias <= 0.9) {
+              li.innerHTML = `<input title="Экспортировать?" type="checkbox" name="kp-${movie.id}">`;
+              lists.orange.push(li);
+            } else {
+              li.innerHTML = `<input title="Экспортировать?" type="checkbox" name="kp-${movie.id}" checked>`;
+              lists.green.push(li);
+            }
+          }
+          let movieHTML = `
+            <table>
+              <tr>
+                <td>КиноПоиск</td>
+                <td title="Оценка">${movie.u || ''}</td>
+                <td><a target="_blank" href="https://www.kinopoisk.ru/film/${movie.id}/">${movie.ru}</td>
+                <td title="Год">${movie.y}</td>
+                <td title="Рейтинг пользователей на IMDb">${movie.r ? movie.r.toFixed(1) : ''}</td>
+                <td title="Количество просмотров на IMDb">${movie.v || ''}</td>
+              </tr>
+          `;
+          movie.i.forEach((imdb, index) => {
+            movieHTML += '<tr>';
+            if (movie.i.length === 1) {
+              movieHTML += '<td>IMDb?</td>';
+            } else {
+              if (index === 0) {
+                movieHTML += `<td><input type="radio" name="imdb-${movie.id}" value="${imdb.id}" checked> IMDb?</td>`;
+              } else {
+                movieHTML += `<td><input type="radio" name="imdb-${movie.id}" value="${imdb.id}"> IMDb?</td>`;
+              }
+            }
+            movieHTML += `
+                <td title="Оценка">${imdb.u || ''}</td>
+                <td><a target="_blank" href="https://www.imdb.com/title/${imdb.id}/">${imdb.en}</a></td>
+                <td title="Год">${imdb.y}</td>
+                <td title="Рейтинг пользователей на IMDb">${imdb.r.toFixed(1)}</td>
+                <td title="Количество просмотров на IMDb">${imdb.v}</td>
+              </tr>
+            `;
+          });
+          let googleImFeelingLuckyUrl = `https://www.google.com/search?q=${encodeURIComponent(movie.en || movie.ru)}+site%3Awww.imdb.com&btnI`;
+          if (isMovieNotFound) {
+            movieHTML += `
+              <tr>
+                <td colspan="2">Google</td>
+                <td colspan="4"><a target="_blank" href="${googleImFeelingLuckyUrl}">Google I'm Feeling Lucky</a></td>
+              </tr>
+              <tr>
+                <td colspan="2">IMDb?</td>
+                <td colspan="4"><input name="url-${movie.id}"></td>
+              </tr>
+            `;
+          } else if (movie.i.length >= 2 || hasDifferentUserRatings) {
+            movieHTML += `
+              <tr>
+                <td colspan="2">Google</td>
+                <td colspan="4"><a target="_blank" href="${googleImFeelingLuckyUrl}">Google I'm Feeling Lucky</a></td>
+              </tr>
+              <tr>
+                <td colspan="2"><input type="radio" name="imdb-${movie.id}" value="${imdb.id}" checked> IMDb?</td>
+                <td colspan="4"><input name="url-${movie.id}"></td>
+              </tr>
+            `;
+            let imdbWithUserRating = movie.i.filter(i => i.u > 0);
+            let userRating = settings.shouldPreferImdbUserRatings && imdbWithUserRating.length ? imdbWithUserRating[0].u : movie.u;
+            if (userRating > 0) {
+              movieHTML += `
+                <tr>
+                  <td colspan="6">Оценка для экспорта: <input type="number" name="rating-${movie.id}" min="0" max="10" value="${userRating}"></td>
+                </tr>
+              `;
+            }
+          }
+          movieHTML += '</table>';
+          li.innerHTML += movieHTML;
+        });
+        document.getElementById('movie-count').innerHTML = movies.length;
+        for (let [color, list] of Object.entries(lists)) {
+          let count = list.length;
+          if (count > 0) {
+            document.getElementById(`${color}-count`).innerHTML = count;
+            let ul = document.createElement('ul');
+            list.forEach(li => ul.appendChild(li));
+            let div = document.getElementById(`${color}-list`);
+            div.appendChild(ul);
+            div.classList.remove('hidden');
+          }
+        }
+        break;
+      case 'folders':
+        let ul = document.createElement('ul');        
+        folders.reverse();
+        folders.forEach(folder => {
+          let li = document.createElement('li');
+          if (folder.n === 0) {
+            li.innerHTML = `<input title="Экспортировать?" type="checkbox" name="folder-${folder.id}">`;
+          } else {
+            li.innerHTML = `<input title="Экспортировать?" type="checkbox" name="folder-${folder.id}" checked>`;
+          }
+          let exportMovieCount = folder.m.filter(m => movies.find(movie => m === movie.id).e).length;
+          let folderHTML = `
+            <table>
+              <tr><td><span class="bold">${folder.ru}</span> (будет экспортировано фильмов: ${exportMovieCount} / ${folder.n})</td></tr>
+          `;
+          if (folder.d) {
+            if (folder.d === 'watchlist') {
+              folderHTML += '<tr><td>На IMDb эта папка вынесена отдельно и называется <b>Watchlist</b>.</td></tr>';
+            } else {
+              folderHTML += '<tr><td>На IMDb найдена папка с таким же названием, что и на КиноПоиске.</td></tr>';
+            }
+            folderHTML += `
+              <tr>
+                <td>
+                  <div>
+                    <input type="radio" name="folder-d-${folder.id}" value="create">
+                    Создать новую папку на IMDb с названием:
+                    <input type="text" name="folder-en-${folder.id}" value="${folder.ru}">
+                  </div>
+                  <div>
+                    <input type="radio" name="folder-d-${folder.id}" value="overwrite" checked>
+                    Добавить фильмы в <a target="_blank" href="https://www.imdb.com/list/${folder.d}/">найденную папку</a> на IMDb
+                  </div>
+                </td>
+              </tr>
+            `;
+          }
+          folderHTML += '</table>';
+          li.innerHTML += folderHTML;
+          ul.appendChild(li);
+        });
+        document.getElementById('folder-count').innerHTML = folders.length;
+        let div = document.getElementById(`folders-list`);
+        div.appendChild(ul);
+        break;
+      case 'final':
+        let finalMovieList = document.createElement('ul');
+        let movieNotFoundCount = 0;
+        let movieNotExportedCount = 0;
+        let movieNotImportedCount = 0;
+        movies.forEach(movie => {
+          let isMovieNotFound = movie.i.length === 0 || movie.r === 0 || movie.v === 0;
+          let isMovieNotExported = movie.e.id && !movie.e.e;
+          let isMovieNotImported = movie.e.id && movie.e.e && !movie.e.s;
+          if (isMovieNotFound) {
+            movieNotFoundCount++;
+          } else if (isMovieNotExported) {
+            movieNotExportedCount++;
+          } else if (isMovieNotImported) {
+            movieNotImportedCount++;
+          } else {
+            return;
+          }
+          let li = document.createElement('li');
+          let googleImFeelingLuckyUrl = `https://www.google.com/search?q=${encodeURIComponent(movie.en || movie.ru)}+site%3Awww.imdb.com&btnI`;
+          let movieHTML = `
+            <table>
+              <tr>
+                <td>Google</td>
+                <td><a target="_blank" href="${googleImFeelingLuckyUrl}">${movie.ru}</td>
+                <td title="Год">${movie.y}</td>
+                <td title="Рейтинг пользователей на IMDb">${movie.r.toFixed(1)}</td>
+                <td title="Количество просмотров на IMDb">${movie.v}</td>
+              </tr>
+          `;
+          if (movie.u) {
+            movieHTML += `
+              <tr>
+                <td colspan="5">Оценка на КиноПоиске: ${movie.u}</td>
+              </tr>
+            `;
+          }
+          let movieFolders = folders.filter(folder => folder.m.some(m => m === movie.id));
+          if (movieFolders.length) {
+            movieHTML += '<tr><td colspan="5">Папки на IMDb: ';
+            movieFolders.forEach((folder, index) => {
+              if (folder.e.r && folder.e.r.id) {
+                movieHTML += `<a target="_blank" href="https://www.imdb.com/list/${folder.e.r.id}/">${folder.ru}</a>`;
+              } else {
+                movieHTML += `${folder.ru}`;
+              }
+              if (index < movieFolders.length - 1) {
+                movieHTML += ', ';
+              }
+            });
+            movieHTML += '</td></tr>';
+          }
+          li.innerHTML += movieHTML;
+          finalMovieList.appendChild(li);
+        });
+        let finalMovieCount = movieNotFoundCount + movieNotFoundCount + movieNotFoundCount;
+        if (finalMovieCount > 0) {
+          document.getElementById('final-movie-count').innerHTML = finalMovieCount;
+          document.getElementById('final-not-found-count').innerHTML = movieNotFoundCount;
+          document.getElementById('final-not-exported-count').innerHTML = movieNotExportedCount;
+          document.getElementById('final-not-imported-count').innerHTML = movieNotImportedCount;
+          let div = document.getElementById(`final-movies-list`);
+          div.appendChild(finalMovieList);
+          div.classList.remove('hidden');
+        }
+        let finalFolderList = document.createElement('ul');
+        let finalFolderCount = 0;
+        folders.forEach(folder => {
+          if (folder.e.e && !folder.e.s) {
+            let li = document.createElement('li');
+            li.innerHTML = `<a target="_blank" href="https://www.kinopoisk.ru/mykp/movies/list/type/${folder.id}/">${folder.ru}</a>`;
+            if (folder.e.r.id) {
+              li.innerHTML = ` (соответствующая <a target="_blank" href="https://www.imdb.com/list/${folder.e.r.id}/">папка</a> на IMDb)`;
+            }
+            finalFolderList.appendChild(li);
+            finalFolderCount++;
+          }
+        });
+        if (finalFolderCount > 0) {
+          document.getElementById('final-folder-count').innerHTML = finalFolderCount;
+          let div = document.getElementById(`final-folders-list`);
+          div.appendChild(finalFolderList);
+          div.classList.remove('hidden');
+        }
+        break;
+    }
+  };
+
+  let submitList = name => {
+    let form = document.forms[`${name}-list`];
+    switch (name) {
+      case 'movies':
+        movies.forEach(movie => {
+          let checkbox = form.elements[`kp-${movie.id}`];
+          if (checkbox && checkbox.checked) {
+            let imdbIndex = 0;
+            let userRating = null;
+            let radios = form.elements[`imdb-${movie.id}`];
+            if (radios) {
+              imdbIndex = [...radios].findIndex(radio => radio.checked) || 0;
+            }
+            if (imdbIndex >= movie.i.length) {
+              let movieImdbUrl = form.elements[`url-${movie.id}`].value;
+              if (movieImdbUrl) {
+                let movieImdbId = movieImdbUrl.split('/').find(s => s.startsWith('tt'));
+                if (movieImdbId) {
+                  movie.i.push({
+                    id: movieImdbId,
+                    u: null,
+                    a: null
+                  });
+                }
+              }
+            }
+            let number = form.elements[`rating-${movie.id}`];
+            if (number) {
+              userRating = +number.value || null;
+            } else {
+              userRating = movie.i[imdbIndex].u || movie.u;
+            }
+            if (movie.i[imdbIndex]) {
+              movie.e = {
+                id: movie.i[imdbIndex].id,
+                a: movie.i[imdbIndex].a,
+                u: userRating,
+                e: true,
+                s: false
+              };
+            }
+          }
+        });
+        break;
+      case 'folders':
+        folders.forEach(folder => {
+          let checkbox = form.elements[`folder-${folder.id}`];
+          if (checkbox && checkbox.checked) {
+            let folderRu = folder.ru;
+            let duplicateFolderId = folder.d;
+            let radios = form.elements[`folder-d-${folder.id}`];
+            if (radios) {
+              let checked = [...radios].find(radio => radio.checked);
+              let shouldOverwriteImdbFolders = checked.value ? checked.value === 'overwrite' : settings.shouldOverwriteImdbFolders;
+              if (!shouldOverwriteImdbFolders) {
+                folderRu = form.elements[`folder-en-${folder.id}`].value;
+                duplicateFolderId = null;
+              }
+            }
+            folder.e = {
+              ru: folderRu,
+              d: duplicateFolderId,
+              s: false,
+              e: true,
+              r: {}
+            };
+          }
+        });
+        break;
+    }
+  };
+  //#endregion
+  
+  //#region debug
+  //document.addEventListener('keydown', event => { if (event.key === 'Enter') document.getElementById('next').children[0].click(); });
+  //#endregion
+</script>
+<script id="export-script-text">(async function () {
+  let site = 'https://www.kinopoisk.ru';
+  if (window.location.origin !== site) return;
+  console.clear();
+
+  let getPage = async (url, options) => await fetch(url, options);
+  let getPageText = async page => await page.text();
+  let getDocument = async (url, options) => await getPageText(await getPage(url, options));
+
+  let findInText = (doc, before, after, index = 0) => {
+    let beforeIndex = doc.indexOf(before, index);
+    if (beforeIndex === -1) return '';
+    index = beforeIndex + before.length;
+    let afterIndex = doc.indexOf(after, index);
+    if (afterIndex === -1) return '';
+    return doc.substring(index, afterIndex);
+  };
+
+  let findAllInText = (doc, before, after) => {
+    let matches = [];
+    let index = 0;
+    for (;;) {
+      let beforeIndex = doc.indexOf(before, index);
+      if (beforeIndex === -1) break;
+      index = beforeIndex + before.length;
+      let afterIndex = doc.indexOf(after, index);
+      if (afterIndex === -1) break;
+      matches.push(doc.substring(index, afterIndex));
+      index = afterIndex + after.length;
+    }
+    return matches;
+  };
+
+  let cleanText = text => {
+    let textarea = document.createElement('textarea');
+    textarea.innerHTML = text.replace('\u00a0', ' ').replace('L \'', 'L\'').trim();
+    return textarea.value;
+  };
+
+  let logProgress = () => {
+    let movieCounter = movieWithUserRatingCounter + movieInFoldersCounter;
+    let movieCount = movieWithUserRatingCount + movieInFoldersCount;
+    let estimatedCounter = movieWithUserRatingCounter + movieInFoldersCounter * 0.3;
+    let estimatedCount = movieWithUserRatingCount + movieInFoldersCount * 0.3;
+    let timeLeft = (new Date() - startTime) * (estimatedCount - estimatedCounter) / estimatedCounter + 1000 * 60;
+    let hoursLeft = Math.floor(timeLeft / (1000 * 60) / 60);
+    let minutesLeft = Math.floor(timeLeft / (1000 * 60) % 60);
+    console.log(`Пожалуйста, подождите. Обработано фильмов: ${movieCounter} / ${movieCount}. Примерное время ожидания: ${hoursLeft} ч. ${minutesLeft} м.`);
+  };
+
+  let movies = [];
+  let folders = [];
+  let shouldExportUserRatings = true;
+  let shouldExportFolders = true;
+
+  let userId = KP.helpers.getUserId();
+  let movieWithUserRatingCount = 0;
+  let movieInFoldersCount = 0;
+
+  if (shouldExportUserRatings) {
+    let voteDocument = await getDocument(`${site}/user/${userId}/votes/list/perpage/10/`);
+    movieWithUserRatingCount = +findInText(voteDocument, 'История оценок (', ')</h2>');
+    console.log(`Пожалуйста, подождите. Всего фильмов с оценками: ${movieWithUserRatingCount}.`);
+  }
+
+  if (shouldExportFolders) {
+    let folderDocument = await getDocument(`${site}/mykp/movies/list/perpage/10/`);
+    let folderBlocks = findAllInText(folderDocument, '<li id="folder_', '</li>');
+    folderBlocks.forEach((folderBlock, index) => {
+      let folder = {};
+      folder.id = +findInText(folderBlock, '', '"');
+      if (index === 0) {
+        folder.n = +findInText(folderDocument, '<div class="pagesFromTo">1&mdash;10 из ', '</div>');
+        if (folder.n > 0) {
+          folder.ru = findInText(folderBlock, '<span class="nameAndNum">', ` (${folder.n})</span>`);
+        } else {
+          folder.ru = findInText(folderBlock, '<span class="nameAndNum">', '</span>');
+        }
+      } else {
+        folder.n = +findInText(folderBlock, '</a> (', ')');
+        folder.ru = findInText(folderBlock, `<a target="_blank" href="/mykp/movies/list/type/${folder.id}/" title="">`, '</a>');
+      }
+      folder.m = [];
+      folder.d = null;
+      folder.e = {};
+      folders.push(folder);
+    });
+    movieInFoldersCount = folders.reduce((accumulator, folder) => accumulator + folder.n, 0);
+    console.log(`Пожалуйста, подождите. Всего папок: ${folders.length}.`);
+    console.log(`Пожалуйста, подождите. Всего фильмов в папках: ${movieInFoldersCount}.`);
+  }
+
+  if (shouldExportUserRatings && shouldExportFolders) {
+    console.log(`Пожалуйста, подождите. Обработано фильмов: 0 / ${movieWithUserRatingCount + movieInFoldersCount}.`);
+  }
+
+  let startTime = new Date();
+  let movieWithUserRatingCounter = 0;
+  let movieInFoldersCounter = 0;
+
+  if (movieWithUserRatingCount > 0) {
+    for (let kpUserRating = 10; kpUserRating > 0; kpUserRating--) {
+      let votePerPageDocument = await getDocument(`${site}/user/${userId}/votes/list/ord/date/perpage/10/vote/${kpUserRating}/`);
+      let moviePerRatingCount = +findInText(votePerPageDocument, 'История оценок (', ')</h2>');
+      for (let i = 0; i < Math.ceil(moviePerRatingCount / 10); i++) {
+        if (i !== 0) {
+          votePerPageDocument = await getDocument(`${site}/user/${userId}/votes/list/ord/date/perpage/10/vote/${kpUserRating}/page/${i + 1}/`);
+        }
+        let kpIds = findAllInText(votePerPageDocument, '<div class="nameRus"><a target="_blank" href="/film/', '/"');
+        let kpRatingDates = findAllInText(votePerPageDocument, '<div class="date">', '</div>');
+        await Promise.all(kpIds.map(async (kpId, index) => {
+          let movie = {};
+          let movieDocument = await getDocument(`${site}/film/${kpId}/`);
+          movie.id = +kpId;
+          movie.u = kpUserRating;
+          movie.ru = cleanText(findInText(movieDocument, '<h1 class="moviename-big" itemprop="name">', '</h1>')
+            .replace(/<span>.*<\/span>/, '').replace('&nbsp;', ' '));
+          movie.en = cleanText(findInText(movieDocument, '<span class="alternativeHeadline" itemprop="alternativeHeadline">', '</span>'));
+          movie.y = +findInText(movieDocument, '<a target="_blank" href="/lists/m_act%5Byear%5D/', '/"');
+          let kpImdbInfo = findInText(movieDocument, '>IMDb: ', ')</div>');
+          if (kpImdbInfo) {
+            movie.r = +kpImdbInfo.split(' ')[0];
+            movie.v = +kpImdbInfo.split('(')[1].split(' ').join('');
+          } else {
+            movie.r = null;
+            movie.v = null;
+          }
+          kpRatingDate = kpRatingDates[index + 1];
+          if (kpRatingDate) {
+            let kpRatingYear = kpRatingDate.substr(6, 4);
+            let kpRatingMonth = kpRatingDate.substr(3, 2);
+            let kpRatingDay = kpRatingDate.substr(0, 2);
+            let kpRatingTime = kpRatingDate.substr(12, 5);
+            movie.d = `${kpRatingYear}.${kpRatingMonth}.${kpRatingDay} ${kpRatingTime}`;
+          } else {
+            movie.d = null;
+          }
+          movie.i = [];
+          movie.e = {};
+          movies.push(movie);
+          movieWithUserRatingCounter++;
+          if ((movieWithUserRatingCounter + movieInFoldersCounter) % 10 === 0) {
+            logProgress();
+          }
+        }));
+      }
+    }
+  }
+
+  if (movieInFoldersCount > 0) {
+    for (let folder of folders) {
+      let folderMovieCount = folder.n;
+      for (let i = 0; i < Math.ceil(folderMovieCount / 10); i++) {
+        let folderPerPageDocument = await getDocument(`${site}/mykp/movies/list/type/${folder.id}/perpage/10/page/${i + 1}/`);
+        let movieBlocks = findAllInText(folderPerPageDocument, '<li id="film_', '</li>');
+        movieBlocks.forEach(movieBlock => {
+          let kpId = +findInText(movieBlock, '<a target="_blank" class="name" href="/film/', '/"');
+          folder.m.push(kpId);
+          let isMovieFound = movies.some(movie => movie.id === kpId);
+          if (!isMovieFound) {
+            let movie = {};
+            movie.id = kpId;
+            movie.u = null;
+            let movieInfoBlock = findInText(movieBlock, '<div class="info">', '</div>');
+            let kpEnTitleAndYear = findInText(movieInfoBlock, '<span>', '</span>');
+            let isTvShow = findInText(movieInfoBlock, '(сериал)', ' &ndash; ') !== '';
+            if (isTvShow) {
+              movie.ru = cleanText(findInText(movieInfoBlock, '>', ' (сериал)</a>'));
+              movie.en = cleanText(kpEnTitleAndYear.split('(').slice(0, -1).join('('));
+              movie.y = +kpEnTitleAndYear.split('(').pop().split(' ')[0];
+            } else {
+              movie.ru = cleanText(findInText(movieInfoBlock, '>', '</a>'));
+              movie.en = cleanText(kpEnTitleAndYear.split('(').slice(0, -1).join('('));
+              movie.y = +kpEnTitleAndYear.split('(').pop().split(')')[0];
+            }
+            let kpImdbInfo = findInText(movieBlock, '<div class="imdb noPosters">IMDb: ', '</div>');
+            if (kpImdbInfo) {
+              movie.r = +kpImdbInfo.split(' ')[0];
+              movie.v = +findInText(kpImdbInfo, '<span>', '</span>').replace('&nbsp;', '');
+            } else {
+              movie.r = null;
+              movie.v = null;
+            }
+            movie.i = [];
+            movies.push(movie);
+          }
+          movieInFoldersCounter++;
+          if ((movieWithUserRatingCounter + movieInFoldersCounter) % 10 === 0) {
+            logProgress();
+          }
+        });
+      }
+    }
+  }
+
+  console.log('Готово. Скопируйте следующий текст:');
+  console.log(JSON.stringify({ movies, folders }));
+})();</script>
+<script id="search-script-text">(async function () {
+  let site = 'https://www.imdb.com';
+  if (window.location.origin !== site) return;
+  console.clear();
+
+  let getPage = async (url, options) => await fetch(url, options);
+  let getPageText = async page => await page.text();
+  let getDocument = async (url, options) => await getPageText(await getPage(url, options));
+
+  let findInText = (doc, before, after, index = 0) => {
+    let beforeIndex = doc.indexOf(before, index);
+    if (beforeIndex === -1) return '';
+    index = beforeIndex + before.length;
+    let afterIndex = doc.indexOf(after, index);
+    if (afterIndex === -1) return '';
+    return doc.substring(index, afterIndex);
+  };
+  
+  let findAllInText = (doc, before, after) => {
+    let matches = [];
+    let index = 0;
+    for (;;) {
+      let beforeIndex = doc.indexOf(before, index);
+      if (beforeIndex === -1) break;
+      index = beforeIndex + before.length;
+      let afterIndex = doc.indexOf(after, index);
+      if (afterIndex === -1) break;
+      matches.push(doc.substring(index, afterIndex));
+      index = afterIndex + after.length;
+    }
+    return matches;
+  };
+  
+  let transliteration = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k',
+    'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh',
+    'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya', '«': '\'', '»': '\'', '№': 'No. '};
+  
+  let transliterate = ru => {
+    let en = '';
+    for (let symbol of ru) {
+      if (symbol in transliteration) {
+        en += transliteration[symbol];
+      } else if (symbol.toLowerCase() in transliteration) {
+        en += transliteration[symbol.toLowerCase()][0].toUpperCase() + transliteration[symbol.toLowerCase()].slice(1);
+      } else {
+        en += symbol;
+      }
+    }
+    return en;
+  };
+
+  let getTitleBias = (title1, title2) => {
+    if (title1 === title2) {
+      return 1;
+    }
+    let pairs1 = title1.split('').map((letter, index, letters) => letter + letters[index]).slice(0, -1);
+    let pairs2 = title2.split('').map((letter, index, letters) => letter + letters[index]).slice(0, -1);
+    let bias1 = pairs1.filter(pair => pairs2.includes(pair)).length / pairs1.length;
+    let bias2 = pairs2.filter(pair => pairs1.includes(pair)).length / pairs2.length;
+    return (bias1 + bias2) / 2;
+  };
+
+  let logProgress = () => {
+    let timeLeft = (new Date() - startTime) * (movieCount - movieCounter) / movieCounter + 1000 * 60;
+    let hoursLeft = Math.floor(timeLeft / (1000 * 60) / 60);
+    let minutesLeft = Math.floor(timeLeft / (1000 * 60) % 60);
+    console.log(`Пожалуйста, подождите. Обработано фильмов: ${movieCounter} / ${movieCount}. Примерное время ожидания: ${hoursLeft} ч. ${minutesLeft} м.`);
+  };
+  
+  let movies = [];
+  let folders = [];
+
+  let startTime = new Date();
+  let movieCount = movies.length;
+  let movieCounter = 0;
+  console.log(`Пожалуйста, подождите. Обработано фильмов: 0 / ${movieCount}.`);
+  
+  for (let i = 0; i < movieCount; i += 10) {
+    await Promise.all(movies.slice(i, i + 10).map(async movie => {
+      if (movie.r === null || movie.v === null) {
+        return;
+      }
+      let kpTitle = movie.en || transliterate(movie.ru);
+      let kpYear = movie.y;
+      let kpImdbRating = movie.r;
+      let kpImdbVotes = movie.v;
+      let bias = Math.max(0.3 - (new Date().getFullYear() - kpYear) * 0.05, 0.15);
+      let minImdbRating = Math.max(kpImdbRating * (1 - bias), 0).toFixed(1);
+      let maxImdbRating = Math.min(kpImdbRating * (1 + bias), 10).toFixed(1);
+      let minImdbVotes = Math.round(kpImdbVotes * 0.9);
+      let maxImdbVotes = Math.round(Math.max(kpImdbVotes * (1 + bias), 100));
+      let searchNoYearUrl = `${site}/search/title?title=${encodeURI(kpTitle)}&user_rating=${minImdbRating},${maxImdbRating}&num_votes=${minImdbVotes},${maxImdbVotes}`;
+      let searchDocument = await getDocument(`${searchNoYearUrl}&release_date=${kpYear - 1}-01-01,${kpYear + 1}-12-31`);
+      let searchMovieBlocks = findAllInText(searchDocument, '<div class="lister-item-content">', '<p class="text-muted">');
+      if (searchMovieBlocks.length === 0) {
+        let searchNoYearDocument = await getDocument(`${searchNoYearUrl}`);
+        searchMovieBlocks = findAllInText(searchNoYearDocument, '<div class="lister-item-content">', '<p class="text-muted">');
+      }
+      searchMovieBlocks.forEach(searchMovieBlock => {
+        let imdbInfo = {};
+        imdbInfo.id = findInText(searchMovieBlock, '<a target="_blank" href="/title/', '/');
+        imdbInfo.u = +findInText(searchMovieBlock, '<span name="ur" data-no-rating="Rate this">', '</span>') || null;
+        imdbInfo.en = findInText(searchMovieBlock, `<a target="_blank" href="/title/${imdbInfo.id}/?ref_=adv_li_tt"\n>`, '</a>').trim();
+        imdbInfo.y = parseInt(findInText(searchMovieBlock, '<span class="lister-item-year text-muted unbold">(', '</span>').replace(/.*\) \(/, ''), 10);
+        imdbInfo.r = +findInText(searchMovieBlock, '<meta itemprop="ratingValue" content="', '" />');
+        imdbInfo.v = +findInText(searchMovieBlock, '<meta itemprop="ratingCount" content="', '" />');
+        imdbInfo.a = findInText(searchMovieBlock, 'data-auth="', '"');
+        if (getTitleBias(kpTitle, imdbInfo.en) > 0.9) {
+          movie.i.push(imdbInfo);
+        }
+      });
+      movieCounter++;
+      if (movieCounter % 10 === 0) {
+        logProgress();
+      }
+    }));
+  }
+
+  if (folders.length) {
+    let userId = IMDbReactInitialState[0].user.id;
+    let folderDocument = await getDocument(`${site}/user/${userId}/lists`);
+    let folderBlocks = findAllInText(folderDocument, '<li class="ipl-zebra-list__item user-list"', '<div class="overflow-menu">');
+    folderBlocks.forEach(folderBlock => {
+      let folderId = findInText(folderBlock, 'id="', '"');
+      let folderName = findInText(folderBlock, `<a target="_blank" class="list-name" href="/list/${folderId}/">`, '</a>');
+      let duplicateFolder = folders.find(folder => folder.ru === folderName);
+      if (duplicateFolder) {
+        duplicateFolder.d = folderId;
+      }
+    });
+    let watchlistFolder = folders.find(folder => folder.id === 3575);
+    if (watchlistFolder) {
+      watchlistFolder.d = "watchlist";
+    }
+  }
+  
+  console.log('Готово. Скопируйте следующий текст:');
+  console.log(JSON.stringify({ movies, folders }));
+})();</script>
+<script id="import-script-text">(async function () {
+  let site = 'https://www.imdb.com';
+  if (window.location.origin !== site) return;
+  console.clear();
+
+  let getPage = async (url, options) => await fetch(url, options);
+  let getPageText = async page => await page.text();
+  let getDocument = async (url, options) => await getPageText(await getPage(url, options));
+
+  let findInText = (doc, before, after, index = 0) => {
+    let beforeIndex = doc.indexOf(before, index);
+    if (beforeIndex === -1) return '';
+    index = beforeIndex + before.length;
+    let afterIndex = doc.indexOf(after, index);
+    if (afterIndex === -1) return '';
+    return doc.substring(index, afterIndex);
+  };
+
+  let logProgress = () => {
+    let timeLeft = (new Date() - startTime) * (requestCount - requestCounter) / requestCounter + 1000 * 60;
+    let hoursLeft = Math.floor(timeLeft / (1000 * 60) / 60);
+    let minutesLeft = Math.floor(timeLeft / (1000 * 60) % 60);
+    console.log(`Пожалуйста, подождите. Обработано запросов: ${requestCounter} / ${requestCount}. Примерное время ожидания: ${hoursLeft} ч. ${minutesLeft} м.`);
+  };
+
+  let movies = [];
+  let folders = [];
+  
+  let startTime = new Date();
+  let movieRequestCount = movies.filter(movie => movie.e && movie.e.e).reduce((accumulator, movie) => accumulator + (movie.e.a ? 1 : 2), 0);
+  let folderRequestCount = folders.filter(folder => folder.e && folder.e.e).reduce((accumulator, folder) => accumulator + folder.n + (folder.d ? 1 : 2), 0);
+  let requestCount = movieRequestCount + folderRequestCount;
+  let requestCounter = 0;
+  console.log(`Пожалуйста, подождите. Обработано запросов: 0 / ${requestCount}.`);
+
+  for (let i = 0; i < movies.length; i += 10) {
+    await Promise.all(movies.slice(i, i + 10).map(async movie => {
+      if (movie.e && movie.e.e) {
+        if (!movie.e.a) {
+          let movieDocument = await getDocument(`${site}/title/${movie.e.id}/`);
+          movie.e.a = findInText(movieDocument, 'data-auth="', '"');
+        }
+        let formData = new FormData();
+        formData.append('tconst', movie.e.id);
+        formData.append('rating', movie.e.u || 0);
+        formData.append('auth', movie.e.a);
+        formData.append('tracking_tag', 'title-maindetails');
+        formData.append('pageId', movie.e.id);
+        formData.append('pageType', 'title');
+        formData.append('subpageType', 'main');
+        let result = await getDocument(`${site}/ratings/_ajax/title`, { method: 'POST', body: formData });
+        movie.e.s = result === '{"status":200}';
+        requestCounter++;
+        if (requestCounter % 10 === 0) {
+          logProgress();
+        }
+      }
+    }));
+  }
+  
+  for (let folder of folders) {
+    if (folder.e && folder.e.e) {
+      if (folder.d) {
+        folder.e.r.id = folder.d;
+      } else {
+        let createFormData = new FormData();
+        createFormData.append('49e6c', '70f3');
+        createFormData.append('name', folder.e.ru);
+        createFormData.append('type', 'Titles');
+        let createResult = await getDocument(`${site}/list/create`, { method: 'POST', body: createFormData });
+        if (createResult.startsWith('"ls')) {
+          folder.e.r.id = createResult.substring(1, createResult.length - 1);
+        }        
+        requestCounter++;
+        if (requestCounter % 10 === 0) {
+          logProgress();
+        }
+      }
+      if (folder.e.r.id) {
+        folder.e.r.n = 0;
+        for (let i = 0; i < folder.m.length; i += 10) {
+          await Promise.all(folder.m.slice(i, i + 10).map(async movieKpId => {
+            let movie = movies.find(movie => movie.id === movieKpId);
+            if (movie && movie.e) {
+              let addFormData = new FormData();
+              addFormData.append('49e6c', '70f3');
+              let addResult = await getPage(`${site}/list/${folder.e.r.id}/${movie.e.r.id}/add`, { method: 'POST', body: addFormData });
+              if (addResult.status === 200) {
+                folder.e.r.n++;
+              }
+              requestCounter++;
+              if (requestCounter % 10 === 0) {
+                logProgress();
+              }
+            }
+          }));
+        }
+        let doneFormData = new FormData();
+        doneFormData.append('49e6c', '70f3');
+        let doneResult = await getPage(`${site}/list/${folder.e.r.id}/edit/done`, { method: 'POST', body: doneFormData });
+        requestCounter++;
+        if (requestCounter % 10 === 0) {
+          logProgress();
+        }
+        folder.e.s = doneResult.status === 200;
+      } else {
+        folder.e.s = false;
+      }
+    }
+  }
+  
+  console.log('Готово. Скопируйте следующий текст:');
+  console.log(JSON.stringify({ movies, folders }));
+})();</script>
+</body>
+</html>
