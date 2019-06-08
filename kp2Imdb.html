@@ -525,8 +525,8 @@
                 <td title="Оценка">${imdb.u || ''}</td>
                 <td><a target="_blank" href="https://www.imdb.com/title/${imdb.id}/">${imdb.en}</a></td>
                 <td title="Год">${imdb.y}</td>
-                <td title="Рейтинг пользователей на IMDb">${imdb.r.toFixed(1)}</td>
-                <td title="Количество просмотров на IMDb">${imdb.v}</td>
+                <td title="Рейтинг пользователей на IMDb">${imdb.r ? imdb.r.toFixed(1) : '?'}</td>
+                <td title="Количество просмотров на IMDb">${imdb.v || '?'}</td>
               </tr>
             `;
           });
