@@ -652,8 +652,8 @@
                 <td>Google</td>
                 <td><a target="_blank" href="${googleImFeelingLuckyUrl}">${movie.ru}</td>
                 <td title="Год">${movie.y}</td>
-                <td title="Рейтинг пользователей на IMDb">${movie.r.toFixed(1)}</td>
-                <td title="Количество просмотров на IMDb">${movie.v}</td>
+                <td title="Рейтинг пользователей на IMDb">${movie.r ? movie.r.toFixed(1) : ''}</td>
+                <td title="Количество просмотров на IMDb">${movie.v || ''}</td>
               </tr>
           `;
           if (movie.u) {
